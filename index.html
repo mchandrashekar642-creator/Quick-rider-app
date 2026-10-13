@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>క్విక్ రైడ్ - రైడర్ యాప్</title>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: sans-serif; margin: 0; padding: 0; background: #f4f4f5; color: #111; padding-bottom: 30px; }
+        
+        /* హెడర్ & డ్యూటీ టోగుల్ */
+        header { background: #1a1a2e; color: #fff; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        header h2 { margin: 0; font-size: 16px; color: #ffcc00; }
+        .duty-switch { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: bold; }
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #2e7d32; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .container { padding: 12px; max-width: 500px; margin: 0 auto; }
+        .card { background: #fff; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #e0e0e0; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .card-title { font-size: 14px; font-weight: bold; color: #1a1a2e; margin-bottom: 10px; border-bottom: 2px solid #ffcc00; padding-bottom: 4px; }
+
+        /* ఆదాయం & బాకీ వాలెట్ */
+        .earnings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .earn-box { background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #e9ecef; text-align: center; }
+        .earn-box h4 { margin: 0 0 5px; font-size: 11px; color: #666; }
+        .earn-box .amt { font-size: 16px; font-weight: bold; color: #2e7d32; }
+
+        /* పరివాహన్ / ఆధార్ రిజిస్ట్రేషన్ ఫారమ్ */
+        .input-group { margin-bottom: 10px; }
+        .input-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #555; }
+        .input-group input { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
+
+        /* రైడ్ రిక్వెస్ట్ కార్డ్ */
+        .ride-request { background: #fffde7; border: 2px solid #ffe082; border-radius: 10px; padding: 12px; margin-top: 10px; }
+        .ride-info p { margin: 4px 0; font-size: 12px; color: #333; }
+        .badge-surge { background: #e53935; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: bold; }
+
+        /* బటన్లు */
+        button { border: none; padding: 10px; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 8px; text-align: center; }
+        .btn-yellow { background-color: #ffcc00; color: #000; }
+        .btn-green { background-color: #2e7d32; color: #fff; }
+        .btn-blue { background-color: #1976d2; color: #fff; }
+        .btn-red { background-color: #d32f2f; color: #fff; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h2>🚴 క్విక్ రైడ్ - రైడర్</h2>
+        <div class="duty-switch">
+            <span id="duty-text">ఆఫ్‌లైన్</span>
+            <label class="switch">
+                <input type="checkbox" id="dutyToggle" onchange="toggleDuty()">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <!-- 1. డ్రైవర్ సమాచారం & వాలెట్ -->
+        <div class="card">
+            <div class="card-title">💰 ఈరోజు ఆదాయం & వాలెట్ బాకీ</div>
+            <div class="earnings-grid">
+                <div class="earn-box">
+                    <h4>మొత్తం సంపాదన</h4>
+                    <div class="amt">₹ 450</div>
+                </div>
+                <div class="earn-box">
+                    <h4>కమిషన్ బాకీ (లిమిట్ ₹200)</h4>
+                    <div class="amt" id="wallet-due" style="color: #d32f2f;">₹ 40</div>
+                </div>
+            </div>
+            <p style="font-size: 10px; color: #666; margin: 8px 0 0; text-align: center;">బాకీ ₹200 దాటితే యాప్ ఆటోమేటిక్‌గా లాక్ అవుతుంది.</p>
+        </div>
+
+        <!-- 2. పరివాహన్ / ఆధార్ రిజిస్ట్రేషన్ ప్రొఫైల్ -->
+        <div class="card">
+            <div class="card-title">🆔 పరివాహన్ & ఆధార్ వెరిఫికేషన్</div>
+            <div class="input-group">
+                <label>డ్రైవింగ్ లైసెన్స్ నెంబర్ (DL)</label>
+                <input type="text" value="TS0320230001234" readonly>
+            </div>
+            <div class="input-group">
+                <label>బైక్ నెంబర్ (Parivahan Auto-Fetch)</label>
+                <input type="text" value="TS 03 EA 1234" readonly>
+            </div>
+            <p style="font-size: 11px; color: #2e7d32; margin: 0; font-weight: bold;">✔ Parivahan Verified (Hero Splendor - Black/Red)</p>
+            <p style="font-size: 11px; color: #2e7d32; margin: 2px 0 0; font-weight: bold;">✔ Aadhaar OTP Verified</p>
+        </div>
+
+        <!-- 3. లైవ్ రైడ్ రిక్వెస్ట్ ఫ్లో (Rapido Style) -->
+        <div class="card">
+            <div class="card-title">📍 లైవ్ రైడ్స్ & ప్రయాణ ప్రాసెస్</div>
+            <p style="font-size: 11px; color: #555;">డ్యూటీ ఆన్ చేయగానే దగ్గర్లోని ప్యాసింజర్ల రైడ్స్ ఇక్కడ కనిపిస్తాయి.</p>
+
+            <div class="ride-request" id="ride-box" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: bold; font-size: 13px;">క్రొత్త రైడ్ రిక్వెస్ట్!</span>
+                    <span class="badge-surge">💎 డైమండ్ సర్వీస్ (+₹20)</span>
+                </div>
+                <div class="ride-info" style="margin-top: 8px;">
+                    <p><b>ప్యాసింజర్:</b> రాజేష్ (⭐ 4.9)</p>
+                    <p><b>పికప్:</b> ఓబులకేశ్వాపూర్ రోడ్, జనగామ</p>
+                    <p><b>డ్రాప్:</b> జనగామ బస్ స్టాండ్</p>
+                    <p><b>అంచనా ఛార్జీ:</b> ₹ 80</p>
+                </div>
+
+                <div id="ride-actions">
+                    <button class="btn-green" onclick="acceptRide()">1. రైడ్‌ని యాక్సెప్ట్ చేయి (Accept)</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // డ్యూటీ ఆన్ / ఆఫ్ ఫంక్షన్
+        function toggleDuty() {
+            let isChecked = document.getElementById('dutyToggle').checked;
+            let dutyText = document.getElementById('duty-text');
+            let rideBox = document.getElementById('ride-box');
+
+            if(isChecked) {
+                dutyText.innerHTML = "ఆన్‌లైన్ (GPS ON)";
+                dutyText.style.color = "#4caf50";
+                rideBox.style.display = "block";
+                alert("మీరు డ్యూటీ ఆన్ చేశారు! జీపీఎస్ లొకేషన్ ఆన్ అయింది. రైడ్స్ రావడం ప్రారంభమవుతుంది.");
+            } else {
+                dutyText.innerHTML = "ఆఫ్‌లైన్";
+                dutyText.style.color = "#ccc";
+                rideBox.style.display = "none";
+            }
+        }
+
+        // రైడ్ ఫ్లో లాజిక్ (Accept -> Arrived -> Start -> Complete)
+        function acceptRide() {
+            let actions = document.getElementById('ride-actions');
+            actions.innerHTML = `<button class="btn-yellow" onclick="riderArrived()">2. లొకేషన్‌కి చేరుకున్నాను (Arrived)</button>`;
+            alert("రైడ్ యాక్సెప్ట్ చేయబడింది! ప్యాసింజర్ పికప్ లొకేషన్‌కు గూగుల్ మ్యాప్ నావిగేషన్ ప్రారంభమైంది.");
+        }
+
+        function riderArrived() {
+            let actions = document.getElementById('ride-actions');
+            actions.innerHTML = `<button class="btn-blue" onclick="startRide()">3. OTP ఎంటర్ చేసి ప్రారంభించు (Start Ride)</button>`;
+            alert("మీరు పికప్ లొకేషన్‌కి చేరుకున్నారు! ప్యాసింజర్‌కి 'Arrived' నోటిఫికేషన్ వెళ్ళింది.");
+        }
+
+        function startRide() {
+            let otp = prompt("ప్యాసింజర్ ఫోన్‌కి వచ్చిన 4-అంకెల OTP ఇవ్వండి:");
+            if(otp) {
+                let actions = document.getElementById('ride-actions');
+                actions.innerHTML = `<button class="btn-red" onclick="completeRide()">4. గమ్యస్థానం చేరాను (Complete Ride)</button>`;
+                alert("OTP మ్యాచ్ అయింది! ప్రయాణం ప్రారంభమైంది.");
+            }
+        }
+
+        function completeRide() {
+            alert("రైడ్ పూర్తయింది!\n\nప్యాసింజర్ నుండి పేమెంట్ స్వీకరించండి:\n• ఆన్‌లైన్ పేమెంట్: అడ్మిన్ QR కోడ్ చూపించండి.\n• క్యాష్ పేమెంట్: నేరుగా క్యాష్ తీసుకోండి.");
+            location.reload();
+        }
+    </script>
+</body>
+                  </html>
+                  
